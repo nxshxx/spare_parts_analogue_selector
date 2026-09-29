@@ -4,15 +4,19 @@
 
 The Spare Parts Analogue Selector is a decision-support system for selecting a similar existing product for a new or low-history product.
 
-The system helps users identify a suitable analogue by comparing product attributes, launch curves, category behaviour, failure behaviour, and promotional conditions.
+The system compares product attributes, launch curves, category behaviour, failure behaviour, and promotional conditions to identify a suitable analogue.
+
+The system also provides confidence information, edge-case warnings, analogue-based demand forecasting, forecast error measurements, and workload safety validation.
 
 ## Problem Statement
 
 New spare-parts products often have little historical data.
 
-Because of this, it is difficult to predict their demand and failure behaviour.
+Because of this, it is difficult to estimate their demand and failure behaviour.
 
 The system selects a similar existing product and provides a similarity score and confidence level.
+
+The selected analogue can also be used as a reference for a six-month demand forecast.
 
 ## Objectives
 
@@ -20,7 +24,12 @@ The system selects a similar existing product and provides a similarity score an
 - Use multiple product characteristics for comparison
 - Explain why an analogue was selected
 - Show confidence in the result
-- Handle cases where no strong analogue exists
+- Detect near-tied analogue candidates
+- Handle missing information
+- Identify cases where no strong analogue exists
+- Generate an analogue-based six-month demand forecast
+- Measure forecast error using MAE and RMSE
+- Apply a workload safety limit
 - Compare the prototype with a simple baseline
 
 ## Technologies Used
@@ -42,11 +51,11 @@ Contains the project datasets.
 
 src/
 
-Contains the main processing and analogue selection code.
+Contains the main processing, forecasting, and workload safety code.
 
 experiments/
 
-Contains baseline comparison experiments.
+Contains baseline comparison, forecast accuracy, and workload testing experiments.
 
 docs/
 
@@ -77,7 +86,7 @@ The prototype compares products using five factors:
 
 - Product attributes: 30%
 - Launch curve: 25%
-- Category: 20%
+- Category behaviour: 20%
 - Failure behaviour: 15%
 - Promotion conditions: 10%
 
@@ -99,6 +108,93 @@ Similarity score is below 60%.
 
 LOW confidence results require manual review.
 
+The system can also reduce confidence when important information is missing.
+
+## Edge-Case Handling
+
+The system handles several important cases.
+
+### No Strong Analogue
+
+If the similarity score is below 60%, the system displays a warning and recommends manual review.
+
+### Near-Tied Analogues
+
+The system compares the best and second-best analogue.
+
+If the difference is 2 percentage points or less, the system displays a manual-review warning.
+
+### Missing Information
+
+Missing numerical values are handled using median values.
+
+Missing promotion information is handled using default values.
+
+The system records missing information before processing and reduces confidence when important information is missing.
+
+## Demand Forecast
+
+The selected analogue's historical six-month demand pattern is displayed as an analogue-based forecast.
+
+The forecast contains:
+
+- Month 1
+- Month 2
+- Month 3
+- Month 4
+- Month 5
+- Month 6
+
+The Streamlit application displays the forecast as both a table and a line chart.
+
+## Forecast Accuracy Validation
+
+A retrospective analogue-based validation experiment was created.
+
+The experiment tested:
+
+Products tested: 30
+
+Total demand values tested: 180
+
+MAE: 4.51
+
+RMSE: 6.09
+
+MAE and RMSE are used to measure the difference between the target product demand values and the demand values transferred from the selected analogue.
+
+These measurements are prototype validation results and should not be interpreted as guaranteed future forecasting accuracy.
+
+## Workload Safety
+
+The system includes an 8-hour maximum daily workload limit.
+
+Example:
+
+Current workload: 4 hours
+
+New assignment: 3 hours
+
+Total workload: 7 hours
+
+Result:
+
+Assignment accepted.
+
+If the total workload exceeds 8 hours, the assignment is rejected.
+
+Example:
+
+Current workload: 6 hours
+
+New assignment: 3 hours
+
+Total workload: 9 hours
+
+Result:
+
+Assignment rejected.
+
 ## Baseline Comparison
 
 A simple baseline was created for comparison.
@@ -115,20 +211,26 @@ Agreement:
 
 33.33%
 
-## Current Project Status
+## Current Phase 2 Status
 
-The Review 1 prototype includes:
+The Phase 2 prototype includes:
 
 - Dataset integration
-- Data processing
 - Similarity calculation
 - Analogue selection
 - Confidence calculation
 - Similarity explanation
+- Near-tie detection
+- Missing-data handling
+- No-strong-analogue detection
+- Six-month demand forecast
+- Forecast accuracy validation
+- MAE measurement
+- RMSE measurement
+- Workload safety validation
+- Forecast visualization
 - Baseline comparison
-- Architecture documentation
-- Data schema documentation
-- Risk register
+- Risk identification
 - User guide
 
 ## How to Run
@@ -145,13 +247,34 @@ streamlit run app.py
 
 The application opens in a web browser.
 
+## Running Experiments
+
+Forecast accuracy:
+
+python experiments\forecast_accuracy.py
+
+Workload safety test:
+
+python -m experiments.workload_test
+
+## Important Note
+
+The system is a decision-support prototype.
+
+Similarity scores and analogue-based forecasts do not guarantee future demand or failure behaviour.
+
+Low-confidence and near-tied results should be reviewed manually.
+
+Workload validation is intended as a safety constraint and should not replace operational policies or human review.
+
 ## Future Work
 
 Future stages can include:
 
-- Forecast accuracy validation
+- Improved out-of-sample forecast validation
 - More failure-case testing
-- Workload safety validation
 - Improved confidence estimation
+- Additional workload constraints
+- More advanced forecasting models
 - Further model optimization
 - Final stakeholder validation
