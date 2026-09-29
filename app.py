@@ -12,8 +12,10 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Spare Parts Analogue Selector")
-st.write("Find the most similar existing product for a new product.")
+st.title("🔧 Spare Parts Analogue Selector")
+st.write(
+    "Decision-support system for selecting a similar existing spare-part product."
+)
 
 products = pd.read_csv("data/products.csv.txt")
 failures = pd.read_csv("data/failures.csv.txt")
@@ -161,8 +163,10 @@ overall_similarity = (
 
 product_ids = data["product_id"].tolist()
 
-selected_product = st.selectbox(
-    "Select a product",
+st.sidebar.header("Product Selection")
+
+selected_product = st.sidebar.selectbox(
+    "Select Product",
     product_ids
 )
 
@@ -227,10 +231,7 @@ elif similarity_score >= 60:
 else:
     confidence = "LOW"
 
-if difference <= 2:
-    near_tie = True
-else:
-    near_tie = False
+near_tie = difference <= 2
 
 if missing_data_found:
 
@@ -240,96 +241,159 @@ if missing_data_found:
     elif confidence == "MEDIUM":
         confidence = "LOW"
 
-st.subheader("Analogue Result")
+st.subheader("Analogue Selection Summary")
 
-st.write(
-    "Best Analogue:",
-    best_product
-)
+col1, col2, col3, col4 = st.columns(4)
 
-st.write(
-    "Similarity:",
-    round(similarity_score, 2),
-    "%"
-)
+with col1:
+    st.metric(
+        "Selected Product",
+        selected_product
+    )
 
-st.write(
-    "Confidence:",
-    confidence
-)
+with col2:
+    st.metric(
+        "Best Analogue",
+        best_product
+    )
 
-st.write(
-    "Second Best Analogue:",
-    second_product
-)
+with col3:
+    st.metric(
+        "Similarity",
+        f"{similarity_score:.2f}%"
+    )
 
-st.write(
-    "Second Similarity:",
-    round(second_similarity_score, 2),
-    "%"
-)
+with col4:
+    st.metric(
+        "Confidence",
+        confidence
+    )
+
+st.divider()
+
+st.subheader("Analogue Comparison")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Best Analogue",
+        best_product,
+        f"{similarity_score:.2f}%"
+    )
+
+with col2:
+    st.metric(
+        "Second Best",
+        second_product,
+        f"{second_similarity_score:.2f}%"
+    )
+
+with col3:
+    st.metric(
+        "Difference",
+        f"{difference:.2f} points"
+    )
+
+if similarity_score < 60:
+
+    st.error(
+        "No strong analogue found. Manual review is required."
+    )
+
+elif near_tie:
+
+    st.warning(
+        "Near-tie detected. Two analogue candidates have "
+        "very similar scores. Manual review is recommended."
+    )
+
+elif confidence == "LOW":
+
+    st.warning(
+        "Confidence is LOW. Manual review is required."
+    )
+
+elif confidence == "MEDIUM":
+
+    st.warning(
+        "Similarity is moderate. Manual review is recommended."
+    )
+
+else:
+
+    st.success(
+        "A strong analogue was found."
+    )
 
 st.subheader("Similarity Explanation")
 
-st.write(
-    "Product Attribute Similarity:",
-    round(
-        attribute_similarity[
-            selected_index,
-            best_index
-        ] * 100,
-        2
-    ),
-    "%"
+col1, col2, col3, col4, col5 = st.columns(5)
+
+attribute_value = (
+    attribute_similarity[
+        selected_index,
+        best_index
+    ] * 100
 )
 
-st.write(
-    "Launch Curve Similarity:",
-    round(
-        launch_similarity[
-            selected_index,
-            best_index
-        ] * 100,
-        2
-    ),
-    "%"
+launch_value = (
+    launch_similarity[
+        selected_index,
+        best_index
+    ] * 100
 )
 
-st.write(
-    "Category Similarity:",
-    round(
-        category_similarity[
-            selected_index,
-            best_index
-        ] * 100,
-        2
-    ),
-    "%"
+category_value = (
+    category_similarity[
+        selected_index,
+        best_index
+    ] * 100
 )
 
-st.write(
-    "Failure Behaviour Similarity:",
-    round(
-        failure_similarity[
-            selected_index,
-            best_index
-        ] * 100,
-        2
-    ),
-    "%"
+failure_value = (
+    failure_similarity[
+        selected_index,
+        best_index
+    ] * 100
 )
 
-st.write(
-    "Promotion Similarity:",
-    round(
-        promotion_similarity[
-            selected_index,
-            best_index
-        ] * 100,
-        2
-    ),
-    "%"
+promotion_value = (
+    promotion_similarity[
+        selected_index,
+        best_index
+    ] * 100
 )
+
+with col1:
+    st.metric(
+        "Attributes",
+        f"{attribute_value:.2f}%"
+    )
+
+with col2:
+    st.metric(
+        "Launch Curve",
+        f"{launch_value:.2f}%"
+    )
+
+with col3:
+    st.metric(
+        "Category",
+        f"{category_value:.2f}%"
+    )
+
+with col4:
+    st.metric(
+        "Failure Behaviour",
+        f"{failure_value:.2f}%"
+    )
+
+with col5:
+    st.metric(
+        "Promotion",
+        f"{promotion_value:.2f}%"
+    )
 
 st.subheader("Data Quality Check")
 
@@ -360,63 +424,6 @@ else:
         "All important information is available."
     )
 
-st.subheader("Analogue Comparison")
-
-st.write(
-    "Best Analogue:",
-    best_product,
-    "→",
-    round(similarity_score, 2),
-    "%"
-)
-
-st.write(
-    "Second Best:",
-    second_product,
-    "→",
-    round(second_similarity_score, 2),
-    "%"
-)
-
-st.write(
-    "Difference:",
-    round(difference, 2),
-    "percentage points"
-)
-
-if similarity_score < 60:
-
-    st.warning(
-        "No strong analogue found. "
-        "Manual review is required."
-    )
-
-elif near_tie:
-
-    st.warning(
-        "Two analogue candidates have very similar "
-        "scores. Manual review is recommended."
-    )
-
-elif confidence == "LOW":
-
-    st.warning(
-        "Confidence is LOW. Manual review is required."
-    )
-
-elif confidence == "MEDIUM":
-
-    st.warning(
-        "Similarity is moderate. "
-        "Manual review is recommended."
-    )
-
-else:
-
-    st.success(
-        "A strong analogue was found."
-    )
-
 st.subheader("6-Month Demand Forecast")
 
 forecast = get_forecast(best_product)
@@ -430,52 +437,82 @@ if forecast is not None:
         }
     )
 
+    total_forecast = forecast_table[
+        "Forecast Demand"
+    ].sum()
+
+    average_forecast = forecast_table[
+        "Forecast Demand"
+    ].mean()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "6-Month Forecast Demand",
+            f"{total_forecast:.0f}"
+        )
+
+    with col2:
+        st.metric(
+            "Average Monthly Demand",
+            f"{average_forecast:.1f}"
+        )
+
     st.table(forecast_table)
 
-    st.write(
-        "The forecast uses the historical demand "
-        "pattern of the selected analogue."
+    st.line_chart(
+        forecast_table.set_index("Month")[
+            "Forecast Demand"
+        ]
     )
 
-    st.line_chart(
-        forecast_table.set_index("Month")["Forecast Demand"]
+    st.info(
+        "The forecast uses the historical demand pattern "
+        "of the selected analogue."
     )
 
 else:
 
     st.warning(
-        "Forecast data is not available "
-        "for the selected analogue."
+        "Forecast data is not available for the selected analogue."
     )
 
 st.subheader("Workload Safety Check")
 
-current_hours = st.number_input(
-    "Current Workload (hours)",
-    min_value=0.0,
-    max_value=24.0,
-    value=4.0,
-    step=1.0
-)
+col1, col2, col3 = st.columns(3)
 
-new_assignment_hours = st.number_input(
-    "New Assignment (hours)",
-    min_value=0.0,
-    max_value=24.0,
-    value=3.0,
-    step=1.0
-)
+with col1:
+
+    current_hours = st.number_input(
+        "Current Workload (hours)",
+        min_value=0.0,
+        max_value=24.0,
+        value=4.0,
+        step=1.0
+    )
+
+with col2:
+
+    new_assignment_hours = st.number_input(
+        "New Assignment (hours)",
+        min_value=0.0,
+        max_value=24.0,
+        value=3.0,
+        step=1.0
+    )
 
 accepted, total_hours = check_workload(
     current_hours,
     new_assignment_hours
 )
 
-st.write(
-    "Total Workload:",
-    total_hours,
-    "hours"
-)
+with col3:
+
+    st.metric(
+        "Total Workload",
+        f"{total_hours:.1f} hours"
+    )
 
 if accepted:
 
@@ -488,3 +525,10 @@ else:
     st.error(
         "Assignment rejected. Workload exceeds the 8-hour limit."
     )
+
+st.divider()
+
+st.caption(
+    "Decision-support prototype. Low-confidence, near-tied, "
+    "and missing-data cases require human review."
+)

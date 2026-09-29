@@ -1,36 +1,40 @@
 # Spare Parts Analogue Selector
 
+Decision-support system for selecting a similar existing spare-part product for new or low-history products.
+
 ## Project Overview
 
-The Spare Parts Analogue Selector is a decision-support system for selecting a similar existing product for a new or low-history product.
+The Spare Parts Analogue Selector is a decision-support system that identifies a similar existing product for a new or low-history spare-part product.
 
-The system compares product attributes, launch curves, category behaviour, failure behaviour, and promotional conditions to identify a suitable analogue.
+The system compares product attributes, launch curves, category behaviour, failure behaviour, and promotional conditions.
 
-The system also provides confidence information, edge-case warnings, analogue-based demand forecasting, forecast error measurements, and workload safety validation.
+It also provides similarity scores, confidence levels, edge-case warnings, analogue-based demand forecasting, forecast validation, and workload safety validation.
 
 ## Problem Statement
 
 New spare-parts products often have little historical data.
 
-Because of this, it is difficult to estimate their demand and failure behaviour.
+Because of this, it can be difficult to estimate their demand and failure behaviour.
 
-The system selects a similar existing product and provides a similarity score and confidence level.
+The system selects a similar existing product and provides an explanation of the similarity and confidence level.
 
 The selected analogue can also be used as a reference for a six-month demand forecast.
 
 ## Objectives
 
 - Select the best existing analogue for a product
-- Use multiple product characteristics for comparison
+- Compare multiple product characteristics
 - Explain why an analogue was selected
-- Show confidence in the result
+- Provide a confidence level
 - Detect near-tied analogue candidates
 - Handle missing information
 - Identify cases where no strong analogue exists
-- Generate an analogue-based six-month demand forecast
-- Measure forecast error using MAE and RMSE
-- Apply a workload safety limit
+- Generate a six-month demand forecast
+- Validate forecast error using MAE and RMSE
+- Apply an 8-hour workload safety limit
 - Compare the prototype with a simple baseline
+- Perform automated validation checks
+- Provide a professional decision-support dashboard
 
 ## Technologies Used
 
@@ -51,11 +55,11 @@ Contains the project datasets.
 
 src/
 
-Contains the main processing, forecasting, and workload safety code.
+Contains forecasting and workload safety modules.
 
 experiments/
 
-Contains baseline comparison, forecast accuracy, and workload testing experiments.
+Contains validation and testing experiments.
 
 docs/
 
@@ -68,6 +72,10 @@ Main Streamlit application.
 requirements.txt
 
 Contains the required Python libraries.
+
+README.md
+
+Project documentation.
 
 ## Datasets
 
@@ -106,13 +114,11 @@ LOW:
 
 Similarity score is below 60%.
 
-LOW confidence results require manual review.
+Low-confidence results require manual review.
 
-The system can also reduce confidence when important information is missing.
+Confidence can also be reduced when important information is missing.
 
 ## Edge-Case Handling
-
-The system handles several important cases.
 
 ### No Strong Analogue
 
@@ -130,7 +136,9 @@ Missing numerical values are handled using median values.
 
 Missing promotion information is handled using default values.
 
-The system records missing information before processing and reduces confidence when important information is missing.
+Missing information is detected before processing.
+
+Confidence is reduced when important information is missing.
 
 ## Demand Forecast
 
@@ -145,23 +153,22 @@ The forecast contains:
 - Month 5
 - Month 6
 
-The Streamlit application displays the forecast as both a table and a line chart.
+The Streamlit application displays the forecast as a table and line chart.
 
-## Forecast Accuracy Validation
+## Forecast Validation
 
-A retrospective analogue-based validation experiment was created.
+A retrospective validation experiment was implemented to evaluate analogue-based demand transfer.
 
-The experiment tested:
+The validation excludes launch-curve demand from analogue selection and uses it only for retrospective forecast evaluation.
 
-Products tested: 30
+Results:
 
-Total demand values tested: 180
+- Products tested: 30
+- Total demand values tested: 180
+- MAE: 4.13
+- RMSE: 5.76
 
-MAE: 4.51
-
-RMSE: 6.09
-
-MAE and RMSE are used to measure the difference between the target product demand values and the demand values transferred from the selected analogue.
+Lower MAE and RMSE indicate smaller forecast errors.
 
 These measurements are prototype validation results and should not be interpreted as guaranteed future forecasting accuracy.
 
@@ -195,6 +202,33 @@ Result:
 
 Assignment rejected.
 
+## Automated Validation
+
+Phase 3 includes automated validation checks for important system rules.
+
+The following six checks were implemented:
+
+1. Normal Product
+2. Near-Tie Analogue
+3. Missing Information
+4. Weak Analogue
+5. Workload Within Limit
+6. Workload Exceeds Limit
+
+Validation result:
+
+- Total tests: 6
+- Passed: 6
+- Failed: 0
+
+The automated validation was executed using:
+
+python -m experiments.phase3_test_cases
+
+The workload safety validation was executed using:
+
+python -m experiments.workload_test
+
 ## Baseline Comparison
 
 A simple baseline was created for comparison.
@@ -203,7 +237,7 @@ The baseline uses product attributes and category.
 
 The prototype uses additional factors such as launch curves, failure behaviour, and promotion conditions.
 
-The experiment tested 30 products.
+The earlier comparison tested 30 products.
 
 Prototype and baseline selected the same analogue for 10 products.
 
@@ -211,9 +245,45 @@ Agreement:
 
 33.33%
 
-## Current Phase 2 Status
+The baseline comparison is included as an initial prototype-level comparison.
 
-The Phase 2 prototype includes:
+## Dashboard
+
+The Streamlit dashboard provides:
+
+- Product selection
+- Best analogue
+- Similarity score
+- Confidence level
+- Second-best analogue
+- Near-tie warning
+- Similarity explanation
+- Data quality check
+- Six-month demand forecast
+- Forecast chart
+- Workload safety validation
+
+Example dashboard output:
+
+Selected Product: P001
+
+Best Analogue: P021
+
+Similarity: 99.76%
+
+Confidence: HIGH
+
+Second Best Analogue: P002
+
+Second Similarity: 99.75%
+
+Difference: 0.01 percentage points
+
+Because the difference is below 2 percentage points, the dashboard displays a near-tie manual-review warning.
+
+## Current Phase 3 Status
+
+The Phase 3 prototype includes:
 
 - Dataset integration
 - Similarity calculation
@@ -224,14 +294,16 @@ The Phase 2 prototype includes:
 - Missing-data handling
 - No-strong-analogue detection
 - Six-month demand forecast
-- Forecast accuracy validation
+- Improved retrospective forecast validation
 - MAE measurement
 - RMSE measurement
 - Workload safety validation
+- Automated validation checks
 - Forecast visualization
 - Baseline comparison
 - Risk identification
 - User guide
+- Professional Streamlit dashboard
 
 ## How to Run
 
@@ -249,9 +321,13 @@ The application opens in a web browser.
 
 ## Running Experiments
 
-Forecast accuracy:
+Improved forecast validation:
 
-python experiments\forecast_accuracy.py
+python experiments\improved_forecast_validation.py
+
+Automated Phase 3 validation:
+
+python -m experiments.phase3_test_cases
 
 Workload safety test:
 
@@ -263,18 +339,35 @@ The system is a decision-support prototype.
 
 Similarity scores and analogue-based forecasts do not guarantee future demand or failure behaviour.
 
-Low-confidence and near-tied results should be reviewed manually.
+Low-confidence, near-tied, and missing-data cases should be reviewed by a human.
 
 Workload validation is intended as a safety constraint and should not replace operational policies or human review.
+
+## Limitations
+
+- The current dataset is a prototype dataset.
+- Forecast validation is retrospective.
+- The current validation does not represent guaranteed future forecasting performance.
+- Some automated validation cases use controlled test values to verify system rules.
+- Additional real-world data would be required for production deployment.
+- Human review remains important for low-confidence and uncertain cases.
 
 ## Future Work
 
 Future stages can include:
 
-- Improved out-of-sample forecast validation
-- More failure-case testing
+- More rigorous out-of-sample forecast validation
+- Additional failure-case testing
 - Improved confidence estimation
-- Additional workload constraints
+- More workload constraints
 - More advanced forecasting models
+- Additional real-world datasets
 - Further model optimization
 - Final stakeholder validation
+- Production deployment considerations
+
+## Project Status
+
+Phase 3 development and validation are in progress.
+
+The current prototype demonstrates analogue selection, confidence handling, demand forecasting, validation metrics, workload safety, automated testing, and a Streamlit decision-support dashboard.
